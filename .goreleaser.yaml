@@ -35,6 +35,29 @@ archives:
         formats:
           - zip
 
+nfpms:
+  - id: linux-packages
+    package_name: rutter
+    vendor: Uttam Likhiya
+    homepage: https://github.com/uttam-li/rutter
+    maintainer: Uttam Likhiya <supercelluttam@gmail.com>
+    description: Install and sync a shared OpenCode configuration.
+    license: MIT
+    section: utils
+    priority: optional
+    formats:
+      - deb
+      - rpm
+      - apk
+    bindir: /usr/bin
+    dependencies:
+      - git
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/rutter/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/rutter/README.md
+
 checksum:
   name_template: checksums.txt
 

@@ -30,7 +30,25 @@ It keeps the CLI and the config in one repository:
 
 ## Install
 
-Download a binary from GitHub Releases, or build from source:
+Each release ships one archive per platform plus native packages for Linux:
+
+| Platform | Files |
+| --- | --- |
+| Linux | `.deb`, `.rpm`, `.apk`, and `.tar.gz` for amd64 and arm64 |
+| macOS | `.tar.gz` for amd64 and arm64 |
+| Windows | `.zip` for amd64 and arm64 |
+
+Install the Linux package for your distribution:
+
+```bash
+sudo dpkg -i rutter_<version>_linux_amd64.deb
+sudo rpm -i rutter_<version>_linux_amd64.rpm
+sudo apk add --allow-untrusted rutter_<version>_linux_amd64.apk
+```
+
+The `.tar.gz` and `.zip` archives contain the binary plus `LICENSE` and `README.md`. Download them from GitHub Releases, then put the binary on your `PATH`.
+
+Or build from source:
 
 ```bash
 go install github.com/uttam-li/rutter/cmd/rutter@latest
