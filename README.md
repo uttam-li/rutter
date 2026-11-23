@@ -1,7 +1,7 @@
 # rutter
 
 <p align="center">
-  <img src="assets/logo.svg" alt="rutter logo" width="120" height="120">
+  <img src="assets/logo.svg?v=2" alt="rutter logo" width="120" height="120">
 </p>
 
 `rutter` installs and syncs a team's shared OpenCode configuration on macOS, Windows, and Linux.
