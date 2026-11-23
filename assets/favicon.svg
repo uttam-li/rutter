@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">rutter</title>
+  <rect width="64" height="64" rx="14" fill="#0d1218"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#8df3c0" stroke-opacity="0.35" stroke-width="1.5"/>
+  <g fill="none" stroke="#8df3c0" stroke-width="7.5" stroke-linecap="round">
+    <path d="M19 18c0 6.6 5.4 11 13 11"/>
+    <path d="M45 18c0 6.6-5.4 11-13 11"/>
+    <path d="M32 29v16"/>
+  </g>
+  <circle cx="32" cy="45" r="4.5" fill="#5ea8ff"/>
+</svg>
