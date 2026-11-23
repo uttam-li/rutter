@@ -213,6 +213,8 @@ rutter/
 │   ├── state/           # manifest
 │   └── version/         # build metadata
 ├── config/              # the shared OpenCode config
+├── scripts/check.sh     # local gate used by make check and the pre-push hook
+├── .githooks/pre-push   # optional hook installed by make hooks
 ├── docs/design.md       # module design
 ├── docs/agent.md        # agent and script contract
 ├── AGENTS.md            # instructions for agents working on this repo
@@ -222,11 +224,23 @@ rutter/
 
 ## Development
 
+Run the local gate before every commit and push:
+
+```bash
+make check
+```
+
+It runs formatting, `go vet`, tests, a build, `golangci-lint`, config validation, and the agent contract check. Install the pre-push hook once with `make hooks`; it runs the gate automatically.
+
+Individual commands are still available:
+
 ```bash
 make build
 make test
 make lint
 ```
+
+When changing `.goreleaser.yaml` or release assets, also run `make check-release`.
 
 Run the test suite in the official Go image:
 
@@ -256,7 +270,7 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The release workflow builds macOS, Linux, and Windows binaries for amd64 and arm64, then publishes archives and checksums.
+The release workflow builds macOS, Linux, and Windows binaries for amd64 and arm64, then publishes archives, native Linux packages, and checksums. Run `make check` and `make check-release` before pushing the tag.
 
 ## Security
 
