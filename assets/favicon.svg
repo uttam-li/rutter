@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">rutter</title>
+  <defs>
+    <mask id="pivot">
+      <rect width="64" height="64" fill="#fff"/>
+      <circle cx="32" cy="32" r="2.8" fill="#000"/>
+    </mask>
+  </defs>
+
   <rect width="64" height="64" rx="14" fill="#0d1218"/>
-  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#8df3c0" stroke-opacity="0.35" stroke-width="1.5"/>
-  <g fill="none" stroke="#8df3c0" stroke-width="7.5" stroke-linecap="round">
-    <path d="M19 18c0 6.6 5.4 11 13 11"/>
-    <path d="M45 18c0 6.6-5.4 11-13 11"/>
-    <path d="M32 29v16"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#8df3c0" stroke-opacity="0.3" stroke-width="1.5"/>
+
+  <g mask="url(#pivot)">
+    <path d="M32 6 L39 25 L58 32 L39 39 L32 58 L25 39 L6 32 L25 25 Z" fill="#8df3c0"/>
+    <path d="M32 39 L39 39 L32 58 L25 39 Z" fill="#5ea8ff"/>
   </g>
-  <circle cx="32" cy="45" r="4.5" fill="#5ea8ff"/>
 </svg>
