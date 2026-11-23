@@ -18,6 +18,8 @@ go vet ./...
 
 Config changes live under `config/` and need the same review as code. They can change permissions, MCP servers, and agent behavior for the whole team.
 
+The CLI is part of a contract with scripts and AI agents. If you add a command, flag, exit code, or JSON field, update `rutter agent` and [docs/agent.md](docs/agent.md) in the same change.
+
 ## Commit style
 
 Use short imperative subjects. Keep CLI changes and config changes in separate commits when they are unrelated.

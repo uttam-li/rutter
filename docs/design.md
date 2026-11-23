@@ -15,7 +15,7 @@ A Go CLI that installs, syncs, and uninstalls the shared OpenCode configuration 
 | `internal/source` | `Ensure`, `Sync` | `git clone`, `git pull --ff-only`, credential handling |
 | `internal/state` | `Load`, `Save`, `Remove` | Manifest shape and persistence |
 | `internal/platform` | `DataDir`, `WriteFileAtomic` | OS data directories and atomic replacement |
-| `internal/cli` | Cobra commands | Flag parsing, output, exit behavior |
+| `internal/cli` | Cobra commands | Flag parsing, JSON envelope, exit codes, self-description |
 
 ## The deep module
 
@@ -50,6 +50,10 @@ No seam exists without a second adapter or a demonstrated variation. The one exc
 - The manifest is saved only after the config and links succeed.
 - A failed sync leaves the previous generated config in place until the new one is written.
 - On Windows, copies are refreshed by `sync`; on Unix, symlinks follow the repository.
+- The CLI never prompts and never requires a TTY.
+- Success JSON goes to stdout; failure JSON goes to stderr.
+- Exit codes and the `ok`/`data`/`error` envelope are stable.
+- `rutter agent` is generated from the live command tree, so documented flags do not drift.
 
 ## Test surface
 
@@ -57,6 +61,7 @@ No seam exists without a second adapter or a demonstrated variation. The one exc
 - `internal/link`: link creation, copy creation, backup and restore, idempotent apply, prune.
 - `internal/opencode`: path parsing for Unix and Windows output.
 - `internal/app`: full install, status, sync, and uninstall with fakes.
+- `internal/cli`: JSON envelopes, exit-code mapping, usage errors, `rutter agent` coverage.
 - CI: Linux, macOS, and Windows matrix, plus the official `golang:1.27.4` container.
 
 ## Non-goals for v0.1

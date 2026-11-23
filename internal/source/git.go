@@ -2,12 +2,16 @@ package source
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+// ErrRepository reports a git or network failure.
+var ErrRepository = errors.New("repository operation failed")
 
 // Source keeps the config repository checkout up to date.
 type Source interface {
@@ -65,7 +69,7 @@ func (g Git) clone(ctx context.Context, url, dir string) error {
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("git clone %s: %w: %s", url, err, strings.TrimSpace(string(out)))
+		return fmt.Errorf("%w: git clone %s: %w (%s)", ErrRepository, url, err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }
@@ -76,7 +80,7 @@ func (g Git) Sync(ctx context.Context, dir string) error {
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("git pull in %s: %w: %s", dir, err, strings.TrimSpace(string(out)))
+		return fmt.Errorf("%w: git pull in %s: %w (%s)", ErrRepository, dir, err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }

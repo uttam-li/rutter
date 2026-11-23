@@ -16,6 +16,7 @@ It keeps the CLI and the config in one repository:
 - Backs up existing files instead of deleting them.
 - Records a manifest so `rutter uninstall` can restore the machine.
 - Asks OpenCode to reload after install and sync.
+- Never prompts, so it works the same for people, scripts, and AI agents.
 
 ## Requirements
 
@@ -57,14 +58,83 @@ rutter sync
 
 This pulls the config repository, re-merges the config, refreshes the managed entries, and reloads OpenCode.
 
+## For agents and scripts
+
+`rutter` is built for unattended use: it never prompts, `install` and `sync` are idempotent, and every command has a stable JSON contract.
+
+Start with the self-description:
+
+```bash
+rutter agent --json
+```
+
+It returns every command, flag, JSON object, exit code, environment variable, and the one interactive command to avoid. `rutter agent` without `--json` prints the same contract as a readable guide.
+
+Enable JSON once with `RUTTER_JSON=1`, or pass `--json` to any command:
+
+```bash
+RUTTER_JSON=1 rutter status
+```
+
+Output contract:
+
+- Success: `{"ok":true,"data":...}` on stdout, exit `0`
+- Failure: `{"ok":false,"error":{"code","exit_code","message","hint"}}` on stderr
+- Human errors: `rutter: ...` plus a `hint:` line on stderr
+
+A typical agent loop:
+
+```bash
+rutter status --json          # inspect without changing anything
+rutter install --json         # first run
+rutter sync --json            # receive the owner's config updates
+rutter doctor --json          # diagnose the environment
+rutter status --check         # non-zero when not installed or drifted
+```
+
+Exit codes:
+
+| Code | Name | Meaning |
+| --- | --- | --- |
+| 0 | `ok` | success |
+| 1 | `error` | unexpected failure |
+| 2 | `usage` | unknown command, flag, or argument |
+| 3 | `not_installed` | run `rutter install` |
+| 4 | `environment` | git, OpenCode, or a doctor check failed |
+| 5 | `drift` | a managed path changed outside rutter |
+| 6 | `repository` | git clone, pull, or network failure |
+| 7 | `config` | invalid base or personal config |
+
+Environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `RUTTER_JSON` | `1` or `true` sets JSON output by default |
+| `RUTTER_REPO` | repository URL for `install` |
+| `RUTTER_CONFIG_DIR` | OpenCode config directory for `install` |
+| `RUTTER_DATA_DIR` | data directory for the checkout, backups, and manifest |
+
+Guarantees agents can rely on:
+
+- No prompts and no TTY requirement.
+- `install` and `sync` can be retried safely.
+- Unmanaged files are moved to a backup, never deleted.
+- `config edit` is the only interactive command, and `rutter agent` marks it.
+- Nothing is committed or pushed. Config updates flow one way from the repository owner.
+
+See [`docs/agent.md`](docs/agent.md) for worked examples and failure handling.
+
 ## Inspect
 
 ```bash
+rutter agent
 rutter status
 rutter status --json
+rutter status --check
 rutter doctor
 rutter config path
 rutter config show
+rutter config show --json
 ```
 
 `rutter config edit` opens the machine-local personal config in `$VISUAL` or `$EDITOR`.
@@ -97,6 +167,8 @@ On macOS and Linux, `rutter` creates symlinks. Changes in the config repository 
 
 On Windows, `rutter` copies files and directories. Run `rutter sync` after pulling changes. This avoids symlink privileges and Developer Mode requirements.
 
+Treat linked entries as read-only. On Windows, `rutter sync` refreshes copies and does not merge edits made inside them.
+
 Backups live under the rutter data directory:
 
 - macOS: `~/Library/Application Support/rutter`
@@ -120,6 +192,8 @@ rutter/
 │   └── version/         # build metadata
 ├── config/              # the shared OpenCode config
 ├── docs/design.md       # module design
+├── docs/agent.md        # agent and script contract
+├── AGENTS.md            # instructions for agents working on this repo
 ├── .github/workflows/   # CI and release
 └── .goreleaser.yaml
 ```

@@ -12,12 +12,20 @@ func newUninstall(service app.Service) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "uninstall",
 		Short: "Remove managed links and restore backups",
+		Long: `Remove the entries rutter installed, restore backed-up files, delete the
+generated config, and remove the manifest.
+
+Files changed outside rutter are left in place and reported as drift.`,
+		Example: "  rutter uninstall\n  rutter uninstall --purge\n  rutter uninstall --json",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			result, err := service.Uninstall(cmd.Context(), purge)
 			if err != nil {
 				return err
 			}
-			printResult(cmd.OutOrStdout(), result)
+			if jsonEnabled(cmd) {
+				return writeJSON(cmd.OutOrStdout(), result)
+			}
+			printUninstallResult(cmd.OutOrStdout(), result)
 			return nil
 		},
 	}

@@ -12,7 +12,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/uttam-li/rutter/internal/app"
+	"github.com/uttam-li/rutter/internal/config"
+	"github.com/uttam-li/rutter/internal/state"
 )
+
+type configPaths struct {
+	ConfigDir string `json:"config_dir"`
+	Config    string `json:"config"`
+	Personal  string `json:"personal"`
+	Repo      string `json:"repo"`
+}
 
 func newConfig(service app.Service) *cobra.Command {
 	cmd := &cobra.Command{
@@ -21,53 +30,62 @@ func newConfig(service app.Service) *cobra.Command {
 	}
 	cmd.AddCommand(
 		newConfigPath(service),
-		newConfigEdit(service),
 		newConfigShow(service),
+		newConfigEdit(service),
 	)
 	return cmd
 }
 
 func newConfigPath(service app.Service) *cobra.Command {
-	return &cobra.Command{
-		Use:   "path",
-		Short: "Print config paths",
+	cmd := &cobra.Command{
+		Use:     "path",
+		Short:   "Print config paths",
+		Example: "  rutter config path\n  rutter config path --json",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			status, err := installedStatus(cmd.Context(), service)
 			if err != nil {
 				return err
 			}
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "config_dir\t%s\n", status.ConfigDir)
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "config\t%s\n", status.ConfigPath)
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "personal\t%s\n", status.PersonalPath)
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "repo\t%s\n", status.RepoDir)
+
+			paths := configPaths{
+				ConfigDir: status.ConfigDir,
+				Config:    status.ConfigPath,
+				Personal:  status.PersonalPath,
+				Repo:      status.RepoDir,
+			}
+			if jsonEnabled(cmd) {
+				return writeJSON(cmd.OutOrStdout(), paths)
+			}
+			line(cmd.OutOrStdout(), "config_dir\t%s\n", paths.ConfigDir)
+			line(cmd.OutOrStdout(), "config\t%s\n", paths.Config)
+			line(cmd.OutOrStdout(), "personal\t%s\n", paths.Personal)
+			line(cmd.OutOrStdout(), "repo\t%s\n", paths.Repo)
 			return nil
 		},
 	}
-}
-
-func newConfigEdit(service app.Service) *cobra.Command {
-	return &cobra.Command{
-		Use:   "edit",
-		Short: "Edit the machine-local personal config",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			status, err := installedStatus(cmd.Context(), service)
-			if err != nil {
-				return err
-			}
-			return openEditor(status.PersonalPath)
-		},
-	}
+	return annotate(cmd, "ConfigPaths")
 }
 
 func newConfigShow(service app.Service) *cobra.Command {
-	return &cobra.Command{
-		Use:   "show",
-		Short: "Print the generated OpenCode config",
+	cmd := &cobra.Command{
+		Use:     "show",
+		Short:   "Print the generated OpenCode config",
+		Long:    "Print the generated opencode.jsonc. With --json, print the parsed document with comments removed.",
+		Example: "  rutter config show\n  rutter config show --json",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			status, err := installedStatus(cmd.Context(), service)
 			if err != nil {
 				return err
 			}
+
+			if jsonEnabled(cmd) {
+				document, err := config.ReadDocument(status.ConfigPath)
+				if err != nil {
+					return err
+				}
+				return writeJSON(cmd.OutOrStdout(), document)
+			}
+
 			data, err := os.ReadFile(status.ConfigPath)
 			if err != nil {
 				return fmt.Errorf("read config: %w", err)
@@ -76,6 +94,26 @@ func newConfigShow(service app.Service) *cobra.Command {
 			return err
 		},
 	}
+	return annotate(cmd, "ConfigDocument")
+}
+
+func newConfigEdit(service app.Service) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit",
+		Short: "Edit the machine-local personal config",
+		Long: `Open the machine-local opencode.personal.json in $VISUAL or $EDITOR.
+
+This command is interactive and is not meant for unattended agents.`,
+		Example: "  rutter config edit",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			status, err := installedStatus(cmd.Context(), service)
+			if err != nil {
+				return err
+			}
+			return openEditor(status.PersonalPath)
+		},
+	}
+	return markInteractive(cmd)
 }
 
 func installedStatus(ctx context.Context, service app.Service) (app.Status, error) {
@@ -84,7 +122,7 @@ func installedStatus(ctx context.Context, service app.Service) (app.Status, erro
 		return app.Status{}, err
 	}
 	if !status.Installed {
-		return app.Status{}, errors.New("rutter is not installed")
+		return app.Status{}, state.ErrNotInstalled
 	}
 	return status, nil
 }

@@ -156,7 +156,7 @@ func (s Service) Sync(ctx context.Context, reload bool) (Result, error) {
 	manifest, err := s.Manifest.Load()
 	if err != nil {
 		if errors.Is(err, state.ErrNotInstalled) {
-			return Result{}, errors.New("rutter is not installed; run `rutter install` first")
+			return Result{}, state.ErrNotInstalled
 		}
 		return Result{}, err
 	}
@@ -251,7 +251,7 @@ func (s Service) Uninstall(ctx context.Context, purge bool) (Result, error) {
 	manifest, err := s.Manifest.Load()
 	if err != nil {
 		if errors.Is(err, state.ErrNotInstalled) {
-			return Result{}, errors.New("rutter is not installed")
+			return Result{}, state.ErrNotInstalled
 		}
 		return Result{}, err
 	}
@@ -261,6 +261,7 @@ func (s Service) Uninstall(ctx context.Context, purge bool) (Result, error) {
 		RepoDir:      manifest.RepoDir,
 		ConfigPath:   manifest.ConfigPath,
 		PersonalPath: manifest.PersonalPath,
+		Links:        manifest.Links,
 	}
 
 	if err := s.Links.Remove(ctx, manifest.Links); err != nil {

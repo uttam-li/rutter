@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -9,14 +9,17 @@ import (
 )
 
 func newDoctor(service app.Service) *cobra.Command {
-	var jsonOutput bool
-
 	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check OpenCode, git, config, and links",
+		Long: `Run local diagnostics: git and OpenCode availability, the manifest, the
+config merge, and every managed link.
+
+Exits non-zero only when a check reports an error. Warnings do not fail.`,
+		Example: "  rutter doctor\n  rutter doctor --json",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			report := service.Doctor(cmd.Context())
-			if jsonOutput {
+			if jsonEnabled(cmd) {
 				if err := writeJSON(cmd.OutOrStdout(), report); err != nil {
 					return err
 				}
@@ -24,12 +27,11 @@ func newDoctor(service app.Service) *cobra.Command {
 				printDoctor(cmd.OutOrStdout(), report)
 			}
 			if !report.OK {
-				return errors.New("doctor found problems")
+				return fmt.Errorf("%w: one or more checks failed", errEnvironment)
 			}
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolVar(&jsonOutput, "json", false, "print JSON")
 	return cmd
 }

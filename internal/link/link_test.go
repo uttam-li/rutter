@@ -86,6 +86,65 @@ func TestApplyIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestApplyReplacesOwnedCopyAndKeepsOriginalBackup(t *testing.T) {
+	root := t.TempDir()
+	sourceFile := filepath.Join(root, "config", "AGENTS.md")
+	targetFile := filepath.Join(root, "opencode", "AGENTS.md")
+	original := filepath.Join(root, "backups", "original-AGENTS.md")
+
+	if err := os.MkdirAll(filepath.Dir(sourceFile), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(targetFile), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(original), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sourceFile, []byte("new"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(targetFile, []byte("stale copy"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(original, []byte("original"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	manager := Manager{BackupRoot: filepath.Join(root, "backups")}
+	planned, err := manager.Plan(filepath.Join(root, "config"), filepath.Join(root, "opencode"), []string{"AGENTS.md"})
+	if err != nil {
+		t.Fatalf("plan: %v", err)
+	}
+
+	previous := []Link{{
+		Source: sourceFile,
+		Target: targetFile,
+		Kind:   KindFile,
+		Mode:   ModeCopy,
+		Backup: original,
+	}}
+	applied, err := manager.Apply(context.Background(), planned, previous)
+	if err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+
+	if applied[0].Backup != original {
+		t.Fatalf("backup = %q, want the original pre-install backup %q", applied[0].Backup, original)
+	}
+	assertContent(t, original, "original")
+	assertContent(t, targetFile, "new")
+	if entries, err := os.ReadDir(filepath.Join(root, "backups")); err != nil {
+		t.Fatal(err)
+	} else {
+		for _, entry := range entries {
+			if entry.Name() != "original-AGENTS.md" {
+				t.Fatalf("unexpected backup entry %q", entry.Name())
+			}
+		}
+	}
+}
+
 func TestPruneRemovesLinkGoneFromPlan(t *testing.T) {
 	root := t.TempDir()
 	sourceDir := filepath.Join(root, "config")

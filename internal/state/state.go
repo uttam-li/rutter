@@ -11,7 +11,7 @@ import (
 	"github.com/uttam-li/rutter/internal/platform"
 )
 
-var ErrNotInstalled = errors.New("rutter is not installed")
+var ErrNotInstalled = errors.New("not installed")
 
 // Manifest records what rutter installed so uninstall can restore the machine.
 type Manifest struct {

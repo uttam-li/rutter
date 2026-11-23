@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// ErrDrift reports a managed path that was changed outside rutter.
+var ErrDrift = errors.New("managed path changed outside rutter")
+
 // Kind describes whether a linked item is a file or a directory.
 type Kind string
 
@@ -104,17 +107,19 @@ func (m Manager) Apply(ctx context.Context, links, previous []Link) ([]Link, err
 				applied = append(applied, item)
 				continue
 			}
-			if owned && old.Mode == ModeCopy && sameContent(item.Source, item.Target) {
-				item.Mode = old.Mode
-				applied = append(applied, item)
-				continue
-			}
-
-			if owned && old.Mode == ModeLink && isSymlink(item.Target) {
+			if owned && old.Mode == ModeCopy {
+				if sameContent(item.Source, item.Target) {
+					item.Mode = old.Mode
+					applied = append(applied, item)
+					continue
+				}
+				// A copy rutter owns is disposable. Replacing it keeps the
+				// original pre-install backup that uninstall must restore.
 				if err := removeLink(item.Target, old.Mode); err != nil {
-					return applied, fmt.Errorf("remove old link %s: %w", item.Target, err)
+					return applied, fmt.Errorf("replace copy %s: %w", item.Target, err)
 				}
 			} else {
+				// Anything else is user data or drift. Preserve it.
 				backup, err := m.backupPath(backupDir, item.Target)
 				if err != nil {
 					return applied, err
@@ -196,7 +201,7 @@ func (m Manager) removeOne(item Link, allowMissing bool) error {
 				return fmt.Errorf("remove %s: %w", item.Target, err)
 			}
 		} else if !allowMissing {
-			return fmt.Errorf("%s was changed outside rutter; leave it or remove it manually", item.Target)
+			return fmt.Errorf("%w: %s", ErrDrift, item.Target)
 		}
 	}
 
@@ -274,9 +279,4 @@ func pathExists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("inspect %s: %w", path, err)
-}
-
-func isSymlink(path string) bool {
-	info, err := os.Lstat(path)
-	return err == nil && info.Mode()&os.ModeSymlink != 0
 }

@@ -38,6 +38,17 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15.0
+      - name: Check the agent contract
+        run: |
+          set -euo pipefail
+          spec="$(go run ./cmd/rutter agent --json)"
+          echo "$spec" | jq -e '.ok == true and (.data.commands | length) > 0'
+          echo "$spec" | jq -e '[.data.commands[].flags[].name] | index("json") != null'
+          set +e
+          RUTTER_DATA_DIR="$(mktemp -d)" go run ./cmd/rutter status --check --json >/dev/null 2>&1
+          code=$?
+          set -e
+          test "$code" -eq 3
 
   config:
     runs-on: ubuntu-latest

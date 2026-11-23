@@ -2,10 +2,14 @@ package opencode
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
 )
+
+// ErrUnavailable reports that the OpenCode CLI could not be used.
+var ErrUnavailable = errors.New("opencode unavailable")
 
 // Client talks to the installed OpenCode CLI.
 type Client interface {
@@ -31,9 +35,13 @@ func (c CLI) ConfigDir(ctx context.Context) (string, error) {
 	cmd := exec.CommandContext(ctx, c.binary(), "debug", "paths")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("run %s debug paths: %w", c.binary(), err)
+		return "", fmt.Errorf("%w: run %s debug paths: %w", ErrUnavailable, c.binary(), err)
 	}
-	return ParseConfigDir(out)
+	dir, err := ParseConfigDir(out)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrUnavailable, err)
+	}
+	return dir, nil
 }
 
 // Reload asks the running OpenCode service to reload configuration.
@@ -41,7 +49,7 @@ func (c CLI) Reload(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, c.binary(), "reload")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("run %s reload: %w: %s", c.binary(), err, strings.TrimSpace(string(out)))
+		return fmt.Errorf("%w: run %s reload: %w (%s)", ErrUnavailable, c.binary(), err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }

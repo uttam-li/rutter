@@ -20,6 +20,7 @@ A Go CLI that installs, syncs, and uninstalls the shared OpenCode configuration 
 - Link strategy: symlinks on Unix, copies on Windows.
 - Config generation: base + personal merge with a generated-file header.
 - Distribution: GitHub Releases built by GoReleaser.
+- Agent contract: non-interactive, JSON envelope, stable exit codes, `rutter agent` self-description.
 
 ## Not yet specified
 
