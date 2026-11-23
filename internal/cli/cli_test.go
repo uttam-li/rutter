@@ -65,6 +65,16 @@ func TestAgentGuide(t *testing.T) {
 	}
 }
 
+func TestRootJSONIsAgentSpec(t *testing.T) {
+	out, stderr, code := runCLI(t, app.Service{}, "--json")
+	if code != int(exitOK) {
+		t.Fatalf("exit = %d, stderr = %s", code, stderr)
+	}
+	if !strings.Contains(out, `"non_interactive": true`) || !strings.Contains(out, `"commands"`) {
+		t.Fatalf("stdout = %s, want the agent spec", out)
+	}
+}
+
 func TestUnknownCommandIsUsageJSON(t *testing.T) {
 	_, stderr, code := runCLI(t, app.Service{}, "bogus", "--json")
 	if code != int(exitUsage) {

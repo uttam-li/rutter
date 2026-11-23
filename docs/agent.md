@@ -8,6 +8,8 @@
 rutter agent --json
 ```
 
+`rutter --json` on its own returns the same document.
+
 The response is the source of truth for:
 
 - every command and flag

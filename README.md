@@ -68,7 +68,7 @@ Start with the self-description:
 rutter agent --json
 ```
 
-It returns every command, flag, JSON object, exit code, environment variable, and the one interactive command to avoid. `rutter agent` without `--json` prints the same contract as a readable guide.
+It returns every command, flag, JSON object, exit code, environment variable, and the one interactive command to avoid. `rutter agent` without `--json` prints the same contract as a readable guide. For a one-line discovery call, `rutter --json` returns the same document.
 
 Enable JSON once with `RUTTER_JSON=1`, or pass `--json` to any command:
 

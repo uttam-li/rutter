@@ -78,7 +78,8 @@ func buildService() (app.Service, error) {
 }
 
 func newRoot(service app.Service) *cobra.Command {
-	root := &cobra.Command{
+	var root *cobra.Command
+	root = &cobra.Command{
 		Use:   "rutter",
 		Short: "Install and sync the team OpenCode configuration",
 		Long: `rutter installs the shared OpenCode config, keeps it current, and removes it cleanly.
@@ -92,6 +93,13 @@ and run "rutter agent" for the complete contract used by scripts and agents.`,
 		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		Args:          cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if jsonEnabled(cmd) {
+				return writeJSON(cmd.OutOrStdout(), buildAgentSpec(root))
+			}
+			return cmd.Help()
+		},
 	}
 	root.SetOut(os.Stdout)
 	root.SetErr(os.Stderr)
