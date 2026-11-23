@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Unslop"
+  short_description: "Guide frontend design without clutter or fixed taste"
+  default_prompt: "Use $ui-unslop to guide this frontend's design or cleanup while respecting its audience, stack, style and conventions."

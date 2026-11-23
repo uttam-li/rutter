@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go mod download
+      - run: go test ./...
+      - run: go vet ./...
+      - run: go build ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0
+
+  config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate config files
+        run: |
+          set -euo pipefail
+          for file in config/*.json; do
+            jq -e . "$file" >/dev/null
+          done
+          test -f config/AGENTS.md
+          find config/skills -name SKILL.md -print0 | xargs -0 -n1 sh -c 'grep -q "^description:" "$0"'
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test in the official Go image
+        run: docker run --rm -v "$PWD":/src -w /src golang:1.27.4 go test ./...

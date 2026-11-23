@@ -1,0 +1,51 @@
+version: 2
+
+project_name: rutter
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: rutter
+    main: ./cmd/rutter
+    binary: rutter
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/uttam-li/rutter/internal/version.Version={{ .Version }}
+      - -X github.com/uttam-li/rutter/internal/version.Commit={{ .Commit }}
+      - -X github.com/uttam-li/rutter/internal/version.Date={{ .Date }}
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  draft: false
+  prerelease: auto

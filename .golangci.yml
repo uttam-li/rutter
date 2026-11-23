@@ -1,0 +1,15 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - errorlint
+    - gocritic
+    - misspell
+  exclusions:
+    generated: lax
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
